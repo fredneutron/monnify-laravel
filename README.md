@@ -82,6 +82,42 @@ This package provides the following services:
 
 # Detailed Usage
 
+## Transaction Service
+
+The Transaction Service handles all payment-related operations.
+
+### All Available Methods
+
+```php
+// Initialize a new transaction
+Monnify::transactions()->initialise($data);  
+
+// Initialize bank transfer payment                 
+Monnify::transactions()->payWithBankTransfer($data);
+
+// Charge a card
+Monnify::transactions()->chargeCard($data);                   
+
+/* Card Authorization */
+
+// Authorize with OTP
+Monnify::transactions()->authorizeOTP($data);   
+
+// Authorize 3D secure card
+Monnify::transactions()->authorizeThreeDSCard($data);        
+
+/* Transaction Information */
+
+// Get all transactions
+Monnify::transactions()->all();
+
+// Get transaction status
+Monnify::transactions()->status($transactionReference);  
+
+// Get status by reference
+Monnify::transactions()->statusByReference($reference, $type); 
+```
+
 ## Transaction Initialization
 
 ```php
@@ -464,7 +500,7 @@ Monnify::invoice()->create($data);
 
 ```php
 $data = [
-    'amount' => 1000.00, 
+    'amount' => 1000.00,                    // float: Invoice amount
     'customerName' => 'John Doe',           // string: Customer name
     'customerEmail' => 'john@example.com',  // string: Customer email
     'expiryDate' => '2024-12-31',          // string: Invoice expiry date
@@ -1305,7 +1341,8 @@ Provides utility functions.
 
 ```php
 // Get all banks
-Monnify::helper()->banks();       
+Monnify::helper()->banks(); 
+      
 // Get banks with USSD  
 Monnify::helper()->banksWithUSSD(); 
 ```
