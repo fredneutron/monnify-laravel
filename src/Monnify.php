@@ -3,7 +3,8 @@
 namespace Monnify\MonnifyLaravel;
 
 use Error;
-use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\PendingRequest;
 
 use Monnify\MonnifyLaravel\Services\{
     TransactionService,
@@ -24,7 +25,7 @@ use Monnify\MonnifyLaravel\Services\{
 
 class Monnify
 {
-    protected Client $client;
+    protected PendingRequest $client;
     public TransactionService $transactions;
     public CustomerReservedAccountService $customerReservedAccount;
     public InvoiceService $invoice;
@@ -45,18 +46,18 @@ class Monnify
         private string $secretKey,
         private string $environment
     ) {
-        if ($environment !== 'SANDBOX' && $environment !== 'LIVE') {
+        if (!in_array($environment, ['SANDBOX', 'LIVE'])) {
             throw new Error("Unknown environment passed: $environment, Please specify between SANDBOX or LIVE");
         }
 
+        $baseUrl = $environment === 'SANDBOX'
+            ? 'https://sandbox.monnify.com'
+            : 'https://api.monnify.com';
+
         // Create single client instance
-        $this->client = new Client([
-            'base_uri' => $environment === 'SANDBOX' ? 'https://sandbox.monnify.com' : 'https://api.monnify.com',
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
-            ]
-        ]);
+        $this->client = Http::baseUrl($baseUrl)
+        ->acceptJson()
+        ->asJson();
 
         // Initialize services with the same client instance
         $this->initializeServices();
@@ -81,7 +82,7 @@ class Monnify
     }
 
     // Add getter for testing purposes
-    public function getClient(): Client
+    public function getClient(): PendingRequest
     {
         return $this->client;
     }
