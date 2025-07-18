@@ -3,7 +3,7 @@
 namespace Monnify\MonnifyLaravel\Services;
 
 use Exception;
-use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\PendingRequest;
 use Monnify\MonnifyLaravel\Enums\HttpMethod;
 use Illuminate\Support\Facades\Cache;
