@@ -2,7 +2,7 @@
 
 namespace Monnify\MonnifyLaravel\Services;
 
-use GuzzleHttp\Client;
+use Illuminate\Http\Client\PendingRequest;
 use InvalidArgumentException;
 use Monnify\MonnifyLaravel\Enums\HttpMethod;
 use Monnify\MonnifyLaravel\Validators\PayCodeValidator;
@@ -11,7 +11,7 @@ class PayCodeService extends BaseService
 {
     private PayCodeValidator $validator;
 
-    public function __construct(Client $client)
+    public function __construct(PendingRequest $client)
     {
         parent::__construct($client);
         $this->validator = new PayCodeValidator();

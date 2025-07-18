@@ -3,14 +3,14 @@
 namespace Monnify\MonnifyLaravel\Services;
 
 use Exception;
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Http\Client\PendingRequest;
 use Monnify\MonnifyLaravel\Enums\HttpMethod;
+use Illuminate\Support\Facades\Cache;
 
 abstract class BaseService
 {
-    public function __construct(protected Client $client)
+    public function __construct(protected PendingRequest $client)
     {
         $this->client = $client;
     }
@@ -23,56 +23,58 @@ abstract class BaseService
     ): array {
         try {
             $accessToken = $this->getAccessToken();
-            $options = [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $accessToken,
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json'
-                ]
-            ];
-            
-            if (!empty($data)) {
-                $options['json'] = $data;
-            }
+            $request = $this->client->withToken($accessToken);
 
             if (!empty($parameters)) {
-                $options['query'] = $parameters;
+                $request = $request->withQueryParameters($parameters);
             }
 
-            $response = $this->client->request($method->value, $endpoint, $options);
+            $response = match ($method) {
+                HttpMethod::GET    => $request->get($endpoint),
+                HttpMethod::POST   => $request->post($endpoint, $data),
+                HttpMethod::PUT    => $request->put($endpoint, $data),
+                HttpMethod::DELETE => $request->delete($endpoint, $data),
+                default            => throw new Exception("Unsupported HTTP method: {$method->value}")
+            };
 
             return [
                 'status' => $response->getStatusCode(),
-                'body' => json_decode($response->getBody()->getContents(), true),
+                'body' => $response->object(),
             ];
         } catch (RequestException $e) {
+            $response = $e->response;
+
             return [
-                'status' => (int) $e->getCode(),
-                'error' => json_decode($e->getResponse()->getBody()->getContents()),
+                'status' => $response ? $response->status() : 500,
+                'error' => $response ? $response->json() : ['message' => $e->getMessage()],
+            ];
+        } catch (Exception $e) {
+            return [
+                'status' => 500,
+                'error' => ['message' => $e->getMessage()],
             ];
         }
     }
 
     public function getAccessToken(): string
     {
-        if (config('accessToken') != 'null' && config('expiresIn') != null && (config('expiresIn') > floor(microtime(true)))) {
-            $accessToken = config('accessToken');
-            return $accessToken;
+        $cache = Cache::store(config('monnify.cache_store', 'monnify_file'));
+
+        if ($cache->has('monnify_access_token')) {
+            return $cache->get('monnify_access_token');
         }
 
         try {
-            $response = $this->client->post('/api/v1/auth/login', [
-                'auth' => [
-                    config('monnify.api_key'),
-                    config('monnify.secret_key'),
-                ]
-            ]);
+            $response = $this->client->withBasicAuth(
+                config('monnify.api_key'),
+                config('monnify.secret_key')
+            )->post('/api/v1/auth/login');
 
-            $response = (object) json_decode($response->getBody()->getContents(), true);
-            $content = (object) $response->responseBody;
+            $response = $response->object();
+            $content = $response->responseBody;
             $accessToken = $content->accessToken;
             // store token
-            $this->setAccessToken($accessToken, $content->expiresIn + floor(microtime(true)));
+            $this->setAccessToken($accessToken, $content->expiresIn);
 
             return $accessToken;
         } catch (Exception $e) {
@@ -87,7 +89,7 @@ abstract class BaseService
         string $accessToken,
         int $expiresIn
     ): void {
-        Config::set('accessToken', $accessToken);
-        Config::set('expiresIn', $expiresIn);
+        $cache = Cache::store(config('monnify.cache_store', 'monnify_file'));
+        $cache->put('monnify_access_token', $accessToken, $expiresIn);
     }
 }

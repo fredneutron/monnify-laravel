@@ -5,13 +5,13 @@ namespace Monnify\MonnifyLaravel\Services;
 use Monnify\MonnifyLaravel\Enums\HttpMethod;
 use Monnify\MonnifyLaravel\Validators\TransactionValidator;
 use InvalidArgumentException;
-use GuzzleHttp\Client;
+use Illuminate\Http\Client\PendingRequest;
 
 class TransactionService extends BaseService
 {
     private TransactionValidator $validator;
 
-    public function __construct(Client $client)
+    public function __construct(PendingRequest $client)
     {
         parent::__construct($client);
         $this->validator = new TransactionValidator();
