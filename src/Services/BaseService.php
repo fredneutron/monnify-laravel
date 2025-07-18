@@ -5,8 +5,8 @@ namespace Monnify\MonnifyLaravel\Services;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Config;
 use Monnify\MonnifyLaravel\Enums\HttpMethod;
+use Illuminate\Support\Facades\Cache;
 
 abstract class BaseService
 {
@@ -55,9 +55,10 @@ abstract class BaseService
 
     public function getAccessToken(): string
     {
-        if (config('accessToken') != 'null' && config('expiresIn') != null && (config('expiresIn') > floor(microtime(true)))) {
-            $accessToken = config('accessToken');
-            return $accessToken;
+        $cache = Cache::store(config('monnify.cache_store', 'monnify_file'));
+
+        if ($cache->has('monnify_access_token')) {
+            return $cache->get('monnify_access_token');
         }
 
         try {
@@ -72,7 +73,7 @@ abstract class BaseService
             $content = (object) $response->responseBody;
             $accessToken = $content->accessToken;
             // store token
-            $this->setAccessToken($accessToken, $content->expiresIn + floor(microtime(true)));
+            $this->setAccessToken($accessToken, $content->expiresIn);
 
             return $accessToken;
         } catch (Exception $e) {
@@ -87,7 +88,7 @@ abstract class BaseService
         string $accessToken,
         int $expiresIn
     ): void {
-        Config::set('accessToken', $accessToken);
-        Config::set('expiresIn', $expiresIn);
+        $cache = Cache::store(config('monnify.cache_store', 'monnify_file'));
+        $cache->put('monnify_access_token', $accessToken, $expiresIn);
     }
 }

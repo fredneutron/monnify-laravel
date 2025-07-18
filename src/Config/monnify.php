@@ -50,4 +50,14 @@ return [
      * default: 'SANDBOX'
      */
     'environment' => env('MONNIFY_ENVIRONMENT', 'SANDBOX'),
+    /*
+    |--------------------------------------------------------------------------
+    | Monnify Cache Store
+    |--------------------------------------------------------------------------
+    |
+    | This cache store will be used by the Monnify package to store
+    | the access token independently from the main app's cache.
+    |
+    */
+    'cache_store' => env('MONNIFY_CACHE_STORE', 'monnify_file'),
 ];
