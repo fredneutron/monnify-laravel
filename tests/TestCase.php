@@ -2,6 +2,7 @@
 
 namespace Monnify\MonnifyLaravel\Tests;
 
+use Illuminate\Http\Client\PendingRequest;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Monnify\MonnifyLaravel\MonnifyServiceProvider;
 
@@ -41,4 +42,34 @@ class TestCase extends BaseTestCase
             $dotenv->load();
         }
     }
+
+    public function accessTokenSetup($mockResponse, String $http_method, string $class)
+    {
+        $mockRequest = $this->createMock(PendingRequest::class);
+        $mockRequest->method('withToken')->willReturnSelf();
+        $mockRequest->method('withQueryParameters')->willReturnSelf();
+        $mockRequest->method($http_method)->willReturn($mockResponse);
+
+        // Stub getAccessToken() to prevent hitting actual Monnify logic
+        $service = $this->getMockBuilder($class)
+            ->setConstructorArgs([$mockRequest])
+            ->onlyMethods(['getAccessToken'])
+            ->getMock();
+        
+        return $service;
+    }
+
+    public function responseBody(): object
+    {
+        return (object)[
+            'requestSuccessful' => true,
+            'responseMessage' => 'success'
+        ];
+    }
+
+    // protected function tearDown(): void
+    // {
+    //     parent::tearDown();
+    //     // Reset any mocks or global state here if needed
+    // }
 }

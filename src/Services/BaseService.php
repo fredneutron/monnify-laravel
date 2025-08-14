@@ -38,7 +38,7 @@ abstract class BaseService
             };
 
             return [
-                'status' => $response->getStatusCode(),
+                'status' => $response->status(),
                 'body' => $response->object(),
             ];
         } catch (RequestException $e) {
