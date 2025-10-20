@@ -3,6 +3,7 @@
 namespace Monnify\MonnifyLaravel\Tests;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Monnify\MonnifyLaravel\MonnifyServiceProvider;
 
@@ -65,6 +66,14 @@ class TestCase extends BaseTestCase
             'requestSuccessful' => true,
             'responseMessage' => 'success'
         ];
+    }
+
+    protected function mockResponse(object $body, int $status = 200): object
+    {
+        $mock = $this->createMock(Response::class);
+        $mock->method('status')->willReturn($status);
+        $mock->method('object')->willReturn($body);
+        return $mock;
     }
 
     // protected function tearDown(): void

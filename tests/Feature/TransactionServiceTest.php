@@ -2,9 +2,6 @@
 
 namespace Monnify\MonnifyLaravel\Tests\Feature;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\Response;
-use Illuminate\Http\Client\RequestException;
 use InvalidArgumentException;
 use Monnify\MonnifyLaravel\Facades\Monnify;
 use Monnify\MonnifyLaravel\Services\TransactionService;
@@ -245,16 +242,6 @@ class TransactionServiceTest extends TestCase
         $this->assertEquals('TX123', $result['body']->responseBody->transactionReference);
     }
 
-    // 🔁 Shared mock response builder
-    private function mockResponse(object $body, int $status = 200): Response
-    {
-        $mock = $this->createMock(Response::class);
-        $mock->method('status')->willReturn($status);
-        $mock->method('object')->willReturn($body);
-        return $mock;
-    }
-
-    // 📦 Reusable success response
     private function response(): object
     {
         $response = $this->responseBody();
@@ -266,7 +253,7 @@ class TransactionServiceTest extends TestCase
         return $response;
     }
 
-    // 📦 Base transaction data with override support
+    // Base transaction data with override support
     private function baseTransactionData(array $overrides = []): array
     {
         return array_merge([
